@@ -9,6 +9,7 @@ The whole purpose of this is to *enable simple yet powerful filtering of your
 Klocwork issues*.
 
 Modules - https://support.roguewave.com/documentation/klocwork/en/11-x/module/
+
 Views - https://support.roguewave.com/documentation/klocwork/en/11-x/customizingyourviewoftheintegrationbuildanalysis/
 
 ## Usage
@@ -26,8 +27,8 @@ E.g.
 
 #### File: 3rdparty.txt
 ```
-\*\*/boost/\*\*
-\*\*/someotherlibrary/\*\*
+**/boost/**
+**/someotherlibrary/**
 ```
 
 #### File: ProjectCode.txt
