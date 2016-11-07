@@ -61,22 +61,21 @@ def main():
     logging.basicConfig(level=logLevel,
         format='%(levelname)s:%(asctime)s %(message)s',
         datefmt='%Y/%m/%d %H:%M:%S')
-    logger = logging.getLogger('kwmodule')
+    logger = logging.getLogger('kwserverfilters')
 
-    kwmodule = KwModule(args.url, args.user, args.re_project, args.verbose,
+    kwserverfilters = KwServerFilters(args.url, args.user, args.re_project, args.verbose,
         args.module_files, args.module_dir, args.view_files, args.view_dir,
         args.silent, logger)
     try:
-        kwmodule.get_project_list()
-        kwmodule.add_modules()
-        kwmodule.add_views()
-        # kwmodule.createModule()
+        kwserverfilters.get_project_list()
+        kwserverfilters.add_modules()
+        kwserverfilters.add_views()
     except SystemExit as e:
         logger.error(e)
         sys.exit(1)
 
 
-class KwModule:
+class KwServerFilters:
     def __init__(self, url, user, re_project, verbose,
         module_files, module_dir, view_files, view_dir,
         silent, logger):
