@@ -38,7 +38,9 @@ E.g.
 
 python kwserverfilters.py --module-files 3rdparty.txt --view-files ProjectCode.txt -url http://myklocworkserver:8080
 
-This will now create a module called 3rdparty and a view called ProjectCode that excludes all code matching the regular expressions provided in the 3rdparty.txt file
+This will now create a module called 3rdparty and a view called ProjectCode that excludes all code matching the regular expressions provided in the 3rdparty.txt file for ALL projects
+
+To specify only certain projects for which to apply this change, use the --re-project option to provide a regular expression for which matching projects will be included
 
 ## Python version
 
