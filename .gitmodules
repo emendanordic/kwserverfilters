@@ -1,0 +1,3 @@
+[submodule "kwplib"]
+	path = kwplib
+	url = https://github.com/emendanordic/kwplib.git
