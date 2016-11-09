@@ -1,11 +1,7 @@
-[components]
-type = module
-paths = justatest,somethingelse
+[Modules]
+3rdparty = justatest,somethingelse
+components = justatest,somethingelse
 
-[3rdparty]
-type = module
-paths = justatest,somethingelse
-
-[*default*]
-type = view
-query = -module:3rdparty
+[Views]
+*default* = -module:3rdparty
+components = module:components

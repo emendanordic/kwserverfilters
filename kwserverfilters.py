@@ -189,34 +189,23 @@ class KwServerFilters:
         config = ConfigParser.ConfigParser()
         config.read(config_file)
         for section in config.sections():
-            items = dict(config.items(section))
-            if not 'type' in items:
-                sys.exit('Could not find type in section "{0}"'.format(section))
-            item_type = items['type']
-            if item_type == 'module':
-                if section in self.modules:
-                    sys.exit("Module '{0}' already defined".format(section))
-                if not 'paths' in items:
-                    sys.exit('Cannot find paths in module "{0}"'.format(section))
-                self.logger.debug('Found module "{0}" with paths "{1}"'.format(
-                    section, items['paths']
-                ))
-                self.modules[section] = items['paths']
-            elif item_type == 'view':
-                if section in self.views:
-                    sys.exit("View '{0}' already defined".format(section))
-                if not 'query' in items:
-                    sys.exit('Cannot find paths in module "{0}"'.format(section))
-                self.logger.debug('Found view "{0}" with query "{1}"'.format(
-                    section, items['query']
-                ))
-                self.views[section] = items['query']
-            else:
-                sys.exit('Type is not module or view in section "{0}"'.format(section))
-
-
-
-
+            for (key, value) in config.items(section):
+                if section == 'Modules':
+                    if key in self.modules:
+                        sys.exit("Module '{0}' already defined".format(key))
+                    self.logger.debug('Found module "{0}" with paths "{1}"'.format(
+                        key, value
+                    ))
+                    self.modules[key] = value
+                elif section == 'Views':
+                    if key in self.views:
+                        sys.exit("View '{0}' already defined".format(key))
+                    self.logger.debug('Found view "{0}" with query "{1}"'.format(
+                        key, value
+                    ))
+                    self.views[key] = value
+                else:
+                    sys.exit('Unrecognised section "{0}"'.format(section))
 
 if __name__ == "__main__":
     main()

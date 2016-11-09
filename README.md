@@ -20,35 +20,32 @@ python kwserverfilters.py --help
 
 ## Module and View format
 
-Just create text config files with each section representing a module or view
-name, specifying a type (module/view) and then a list of paths for a module or a
-query for a view (see below for more information)
+Just create text config files with sections representing Modules or Views,
+specifying a line for each module/view
 
 E.g.
 
 #### File: example_modules_views.txt
 ```
-[components]
-type = module
-paths = justatest,somethingelse
+[Modules]
+3rdparty = justatest,somethingelse
+components = justatest,somethingelse
 
-[3rdparty]
-type = module
-paths = justatest,somethingelse
-
-[*default*]
-type = view
-query = -module:3rdparty
+[Views]
+*default* = -module:3rdparty
+components = module:components
 ```
 
-This defines two modules, "components" and "3rdparty", and a view, "\*default\*"
+This defines two modules, "3rdparty" and "components", and two views,
+"\*default\*" and "components"
 
 python kwserverfilters.py --config-files example_modules_views.txt
 -url http://myklocworkserver:8080
 
 This will now create two modules called "components" and "3rdparty" and update
-the default view to exclude all code matching the regular expressions provided
-in the 3rdparty module file for ALL projects
+the default view (to exclude all code matching the regular expressions provided
+in the 3rdparty module) and create the view "components" to include code only
+matching the regular expressions given by the components module
 
 To specify only certain projects for which to apply this change, use the
 --re-project option to provide a regular expression for which matching projects
