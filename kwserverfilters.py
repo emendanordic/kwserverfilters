@@ -23,7 +23,7 @@
 
 from kwplib import kwplib
 
-import argparse, getpass, json, logging, os, re, sys
+import argparse, ConfigParser, getpass, json, logging, os, re, sys
 from collections import namedtuple
 
 parser = argparse.ArgumentParser(description='Klocwork Module and View Updater')
@@ -34,20 +34,9 @@ parser.add_argument('--user', required=False, default=getpass.getuser(),
 parser.add_argument('--re-project', required=False, default='',
     help='Regular expression for which matching projects will be processed')
 
-module_group = parser.add_mutually_exclusive_group(required=True)
-view_group = parser.add_mutually_exclusive_group(required=True)
-module_group.add_argument('--module-files',
-    help='Location of the text files containing modules to add to the Klocwork\
-    server.')
-module_group.add_argument('--module-dir',
-    help='Directory containing module text files to parse. Alternative to\
-    --module-files.')
-view_group.add_argument('--view-files',
-    help='Location of the text files containing views to add to the Klocwork\
-    server.')
-view_group.add_argument('--view-dir',
-    help='Directory containing view text files to parse. Alternative to\
-    --view-files.')
+parser.add_argument('--config-files', required=True,
+    help='The configuration file(s) containing the modules and views to add\
+    to the Klocwork server. See README for format information')
 parser.add_argument('--silent', required=False, dest='silent', action='store_true',
     help='Do not prompt user about performing updates')
 parser.add_argument('--verbose', required=False, dest='verbose',
@@ -64,7 +53,8 @@ def main():
     logger = logging.getLogger('kwserverfilters')
 
     kwserverfilters = KwServerFilters(args.url, args.user, args.re_project, args.verbose,
-        args.module_files, args.module_dir, args.view_files, args.view_dir,
+        # args.module_files, args.module_dir, args.view_files, args.view_dir,
+        args.config_files,
         args.silent, logger)
     try:
         kwserverfilters.get_project_list()
@@ -77,14 +67,15 @@ def main():
 
 class KwServerFilters:
     def __init__(self, url, user, re_project, verbose,
-        module_files, module_dir, view_files, view_dir,
+        config_files,
         silent, logger):
         self.kwapicon = kwplib.KwApiCon(url=url, user=user, verbose=verbose)
         self.re_project = re_project
-        self.module_files = module_files
-        self.module_dir = module_dir
-        self.view_files = view_files
-        self.view_dir = view_dir
+        # self.module_files = module_files
+        # self.module_dir = module_dir
+        # self.view_files = view_files
+        # self.view_dir = view_dir
+        self.config_files = config_files
         self.silent = silent
         self.logger = logger
         self.modules = dict()
@@ -92,8 +83,8 @@ class KwServerFilters:
 
         self.projects = []
 
-        self.modules = self.parse_files(self.module_files, self.module_dir)
-        self.views = self.parse_files(self.view_files, self.view_dir)
+        self.config = ConfigParser.ConfigParser()
+        self.parse_config_files()
 
 
     def get_project_list(self):
@@ -141,7 +132,7 @@ class KwServerFilters:
                     'project' : project,
                     'action' : action,
                     'name' : m_name,
-                    'paths' : ','.join(m_paths),
+                    'paths' : m_paths,
                     'allow_all' : True
                 }
 
@@ -161,7 +152,7 @@ class KwServerFilters:
         for project in self.projects:
             self.logger.info('Updating project "{0}"'.format(project))
             existing_views = self.get_items(project, 'views')
-            for v_name, v_query in self.modules.iteritems():
+            for v_name, v_query in self.views.iteritems():
                 action = 'create_view'
                 if v_name in existing_views:
                     action = 'update_view'
@@ -169,7 +160,7 @@ class KwServerFilters:
                     'project' : project,
                     'action' : action,
                     'name' : v_name,
-                    'query' : ','.join(v_query),
+                    'query' : v_query,
                     'tags' : 'auto-created'
                 }
 
@@ -190,30 +181,40 @@ class KwServerFilters:
         self.logger.debug('Retrieved {0} : {1}'.format(action, items))
         return items
 
-    def parse_files(self, input_files, input_dir):
-        files = []
-        storage = {}
-        if input_files:
-            files = input_files.strip().split(',')
-        elif input_dir:
-            if not os.path.exists(input_dir) or not os.path.isdir(input_dir):
-                sys.exit("Could not find directory '{0}'".format(input_dir))
-            files = os.listdir(input_dir)
-        self.logger.info('Retrieving modules/views from files {0}'.format(', '.join(files)))
-        for i in files:
-            if not os.path.exists(i):
-                sys.exit("Could not find source file '{0}'".format(i))
-            name = os.path.splitext(i)[0]
-            values = []
-            with open(i, 'r') as f:
-                for line in f:
-                    # ignore empty lines
-                    if line.strip():
-                        values.append(line.strip())
-            if name in storage:
-                sys.exit("Module/view '{0}' already defined".format(name))
-            storage[name] = values
-        return storage
+    def parse_config_files(self):
+        for f in self.config_files.strip().split(','):
+            self.parse_config_file(f)
+
+    def parse_config_file(self, config_file):
+        config = ConfigParser.ConfigParser()
+        config.read(config_file)
+        for section in config.sections():
+            items = dict(config.items(section))
+            if not 'type' in items:
+                sys.exit('Could not find type in section "{0}"'.format(section))
+            item_type = items['type']
+            if item_type == 'module':
+                if section in self.modules:
+                    sys.exit("Module '{0}' already defined".format(section))
+                if not 'paths' in items:
+                    sys.exit('Cannot find paths in module "{0}"'.format(section))
+                self.logger.debug('Found module "{0}" with paths "{1}"'.format(
+                    section, items['paths']
+                ))
+                self.modules[section] = items['paths']
+            elif item_type == 'view':
+                if section in self.views:
+                    sys.exit("View '{0}' already defined".format(section))
+                if not 'query' in items:
+                    sys.exit('Cannot find paths in module "{0}"'.format(section))
+                self.logger.debug('Found view "{0}" with query "{1}"'.format(
+                    section, items['query']
+                ))
+                self.views[section] = items['query']
+            else:
+                sys.exit('Type is not module or view in section "{0}"'.format(section))
+
+
 
 
 

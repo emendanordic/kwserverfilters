@@ -1,0 +1,11 @@
+[components]
+type = module
+paths = justatest,somethingelse
+
+[3rdparty]
+type = module
+paths = justatest,somethingelse
+
+[*default*]
+type = view
+query = -module:3rdparty

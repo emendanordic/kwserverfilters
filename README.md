@@ -20,27 +20,39 @@ python kwserverfilters.py --help
 
 ## Module and View format
 
-Just create text files with each line representing a path in a module or a search query in a view.
-The name of the text file (without extension) will be used as the module/view name.
+Just create text config files with each section representing a module or view
+name, specifying a type (module/view) and then a list of paths for a module or a
+query for a view (see below for more information)
 
 E.g.
 
-#### File: 3rdparty.txt
+#### File: example_modules_views.txt
 ```
-**/boost/**
-**/someotherlibrary/**
+[components]
+type = module
+paths = justatest,somethingelse
+
+[3rdparty]
+type = module
+paths = justatest,somethingelse
+
+[*default*]
+type = view
+query = -module:3rdparty
 ```
 
-#### File: ProjectCode.txt
-```
--module:3rdparty
-```
+This defines two modules, "components" and "3rdparty", and a view, "\*default\*"
 
-python kwserverfilters.py --module-files 3rdparty.txt --view-files ProjectCode.txt -url http://myklocworkserver:8080
+python kwserverfilters.py --config-files example_modules_views.txt
+-url http://myklocworkserver:8080
 
-This will now create a module called 3rdparty and a view called ProjectCode that excludes all code matching the regular expressions provided in the 3rdparty.txt file for ALL projects
+This will now create two modules called "components" and "3rdparty" and update
+the default view to exclude all code matching the regular expressions provided
+in the 3rdparty module file for ALL projects
 
-To specify only certain projects for which to apply this change, use the --re-project option to provide a regular expression for which matching projects will be included
+To specify only certain projects for which to apply this change, use the
+--re-project option to provide a regular expression for which matching projects
+will be included
 
 ## Python version
 
